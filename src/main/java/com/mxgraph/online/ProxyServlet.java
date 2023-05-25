@@ -78,6 +78,12 @@ public class ProxyServlet extends HttpServlet
 
 			try(OutputStream out = response.getOutputStream())
 			{
+				if ("draw.io".equals(ua))
+				{
+					log.log(Level.SEVERE, "Infinite loop detected, proxy should not call itself");
+					throw new UnsupportedContentException();
+				}
+
 				request.setCharacterEncoding("UTF-8");
 				response.setCharacterEncoding("UTF-8");
 
@@ -156,12 +162,12 @@ public class ProxyServlet extends HttpServlet
 					}
 					else
 					{
-						response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+						response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 					}
 				}
 				else
 				{
-					response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				}
 
 				out.flush();
@@ -173,16 +179,16 @@ public class ProxyServlet extends HttpServlet
 			}
 			catch (DeadlineExceededException e)
 			{
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			}
 			catch (UnknownHostException | FileNotFoundException e)
 			{
 				// do not log 404 and DNS errors
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			}
 			catch (UnsupportedContentException e)
 			{
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				log.log(Level.SEVERE, "proxy request with invalid content: url="
 						+ ((urlParam != null) ? urlParam : "[null]")
 						+ ", referer=" + ((ref != null) ? ref : "[null]")
@@ -190,14 +196,14 @@ public class ProxyServlet extends HttpServlet
 			}
 			catch (SizeLimitExceededException e)
 			{
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 
 				throw e;
 			}
 			catch (Exception e)
 			{
 				response.setStatus(
-						HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+						HttpServletResponse.SC_BAD_REQUEST);
 				log.log(Level.FINE, "proxy request failed: url="
 						+ ((urlParam != null) ? urlParam : "[null]")
 						+ ", referer=" + ((ref != null) ? ref : "[null]")
@@ -209,7 +215,7 @@ public class ProxyServlet extends HttpServlet
 		}
 		else
 		{
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			log.log(Level.SEVERE,
 					"proxy request with invalid URL parameter: url="
 							+ ((urlParam != null) ? urlParam : "[null]"));
